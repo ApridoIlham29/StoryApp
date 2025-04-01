@@ -158,19 +158,17 @@ export default class AddStoryPage {
         clearElementError(this.#formErrorMessageElement);
 
         const options = {
-            enableHighAccuracy: false, // Still using false based on previous attempt
+            enableHighAccuracy: false,
             timeout: 15000,
             maximumAge: 0
         };
         console.log('[Geolocation] Attempting navigator.geolocation.getCurrentPosition with options:', options);
 
         navigator.geolocation.getCurrentPosition(
-          // Success Callback
           (position) => {
               console.log('[Geolocation] Success Callback Triggered. Position Object:', position);
               this.#geolocationSuccess(position);
           },
-          // Error Callback (Inline for detailed logging)
           (error) => {
               console.error('[Geolocation] Error Callback Triggered. Error Object received from browser:', error);
               this.#geolocationError(error);

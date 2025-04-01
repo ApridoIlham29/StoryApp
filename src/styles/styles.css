@@ -52,7 +52,7 @@
   --border-radius-lg: 8px;
 
   --shadow-xs: 0 0 0 transparent;
-  --shadow-sm: 0 1px 3px 0 rgba(var(--shadow-color-rgb), 0.2), 0 1px 2px 0 rgba(var(--shadow-color-rgb), 0.16); /* Darker shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(var(--shadow-color-rgb), 0.2), 0 1px 2px 0 rgba(var(--shadow-color-rgb), 0.16);
   --shadow-md: 0 4px 6px -1px rgba(var(--shadow-color-rgb), 0.25), 0 2px 4px -1px rgba(var(--shadow-color-rgb), 0.16);
   --shadow-lg: 0 10px 15px -3px rgba(var(--shadow-color-rgb), 0.3), 0 4px 6px -2px rgba(var(--shadow-color-rgb), 0.15);
   --shadow-xl: var(--shadow-lg);
@@ -391,7 +391,7 @@ main[aria-busy="true"] .content-loading-indicator { display: flex; }
   font-size: 1rem;
   cursor: pointer;
   text-align: center; text-decoration: none;
-  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Bootstrap transition */
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   box-shadow: var(--shadow-xs);
   font-family: inherit; vertical-align: middle; line-height: 1.5;
   font-weight: var(--font-weight-normal); 

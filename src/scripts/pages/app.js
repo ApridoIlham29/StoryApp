@@ -70,8 +70,8 @@ class App {
               { transform: 'translateY(10px)', opacity: 0 },
               { transform: 'translateY(0)', opacity: 1 }
             ], {
-              duration: 350, /* Slightly faster */
-              easing: 'cubic-bezier(0.4, 0, 0.2, 1)', /* Standard ease-out */
+              duration: 350,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
               pseudoElement: '::view-transition-new(root)',
             });
           }
