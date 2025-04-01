@@ -2,9 +2,7 @@
 
 Aplikasi Single-Page Application (SPA) untuk berbagi cerita (mirip Instagram Story) yang menampilkan lokasi cerita pada peta. Dibangun menggunakan Vanilla JavaScript, Webpack, dan berbagai Web API modern sebagai bagian dari submission kelas Menjadi Front-End Web Developer Expert di Dicoding Academy. Versi ini mencakup perbaikan dan peningkatan UI/UX.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/YOUR_NETLIFY_BADGE_ID/deploy-status)](https://app.netlify.com/sites/YOUR_NETLIFY_SITE_NAME/deploys)
-
-**Demo:** [Link ke Aplikasi Demo Anda]
+**Demo:** https://storyku.netlify.app/
 
 ## Fitur
 
