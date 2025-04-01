@@ -15,7 +15,7 @@
     "frontend",
     "expert"
   ],
-  "author": "Nama Anda <email@anda.com>",
+  "author": "Aprido Ilham <aprido233@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@babel/preset-env": "^7.26.9",
