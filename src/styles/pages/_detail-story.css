@@ -161,7 +161,12 @@
     margin-top: var(--spacing-xl);
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
-}
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
 .detail-story__actions .button {
     min-width: 180px;
     background-color: transparent;

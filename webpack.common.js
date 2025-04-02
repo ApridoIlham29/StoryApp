@@ -17,10 +17,16 @@ module.exports = {
       {
         test: /\.(png|jpe?g|gif|svg)$/i,
         type: 'asset/resource',
+        generator: {
+           filename: 'assets/images/[hash][ext][query]'
+        }
       },
        {
          test: /\.(woff|woff2|eot|ttf|otf)$/i,
          type: 'asset/resource',
+         generator: {
+           filename: 'assets/fonts/[hash][ext][query]'
+         }
        },
     ],
   },
@@ -30,14 +36,19 @@ module.exports = {
       filename: 'index.html',
     }),
     new CopyWebpackPlugin({
-        patterns: [
-            {
-                from: path.resolve(__dirname, 'src/public/'),
-                to: path.resolve(__dirname, 'dist/'),
-                noErrorOnMissing: true,
-                globOptions: {},
-            },
-        ],
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'src/public/'),
+          to: path.resolve(__dirname, 'dist/'),
+          globOptions: {
+            ignore: ['**/STUDENT.txt'],
+          },
+        },
+        {
+          from: path.resolve(__dirname, 'src/scripts/push-handler.js'),
+          to: path.resolve(__dirname, 'dist/push-handler.js'),
+        }
+      ],
     }),
   ],
 };

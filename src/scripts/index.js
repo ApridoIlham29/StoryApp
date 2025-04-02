@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   if (!mainContentElement || !drawerButtonElement || !navigationDrawerElement || !authMenuContainerElement || !mobileDrawerElement || !mobileAuthContainerElement || !mobileDrawerCloseButton || !drawerOverlayElement) {
-      console.error("Fatal Error: One or more essential layout elements are missing.");
-      return;
+     console.error("Fatal Error: One or more essential layout elements are missing.");
+     return;
   }
 
   initImageModal();
@@ -33,14 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const authLoginListener = (userData) => {
-      console.log('EventBus: auth:login received, updating UI...', userData);
-      updateAuthUI(authMenuContainerElement, mobileAuthContainerElement);
-      updateProtectedNavItems();
+     console.log('EventBus: auth:login received, updating UI...', userData);
+     updateAuthUI(authMenuContainerElement, mobileAuthContainerElement);
+     updateProtectedNavItems();
   };
   const authLogoutListener = () => {
-      console.log('EventBus: auth:logout received, updating UI...');
-      updateAuthUI(authMenuContainerElement, mobileAuthContainerElement);
-      updateProtectedNavItems();
+     console.log('EventBus: auth:logout received, updating UI...');
+     updateAuthUI(authMenuContainerElement, mobileAuthContainerElement);
+     updateProtectedNavItems();
   };
 
   EventBus.on(AUTH_LOGIN_EVENT, authLoginListener);
@@ -53,6 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSkipLink();
     window.removeEventListener('hashchange', handleHashChange);
     window.addEventListener('hashchange', handleHashChange);
+
+    if (process.env.NODE_ENV === 'production') {
+      const registerServiceWorker = (await import('./utils/sw-register.js')).default;
+      await registerServiceWorker();
+    } else {
+      console.log('Development mode: Service Worker registration skipped.');
+    }
   };
 
   const handleHashChange = async () => {
@@ -70,19 +77,19 @@ function setupClock() {
   const dateEl = document.querySelector('.clock__date');
 
   function updateClock() {
-      if (!timeEl || !dateEl) return;
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+     if (!timeEl || !dateEl) return;
+     const now = new Date();
+     const hours = String(now.getHours()).padStart(2, '0');
+     const minutes = String(now.getMinutes()).padStart(2, '0');
+     const seconds = String(now.getSeconds()).padStart(2, '0');
+     timeEl.textContent = `${hours}:${minutes}:${seconds}`;
 
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      try {
-         dateEl.textContent = now.toLocaleDateString('id-ID', options);
-      } catch (e) {
-         dateEl.textContent = now.toLocaleDateString('en-US', options);
-      }
+     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+     try {
+       dateEl.textContent = now.toLocaleDateString('id-ID', options);
+     } catch (e) {
+       dateEl.textContent = now.toLocaleDateString('en-US', options);
+     }
   }
 
   if (clockIntervalId) {
@@ -105,7 +112,7 @@ function setupMobileDrawer(button, drawer, closeButton, overlay) {
     });
     drawer.addEventListener('click', (e) => {
        if (e.target.matches('a')) {
-           closeMobileDrawer(drawer, overlay, button);
+          closeMobileDrawer(drawer, overlay, button);
        }
     });
 }
@@ -125,7 +132,6 @@ function closeMobileDrawer(drawer, overlay, button) {
     drawer.classList.remove('open');
     overlay.classList.remove('open');
 }
-
 
 function updateAuthUI(desktopContainer, mobileContainer) {
     if (!desktopContainer || !mobileContainer) { return; }

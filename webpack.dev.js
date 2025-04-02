@@ -20,12 +20,31 @@ module.exports = merge(common, {
           }
         ],
       },
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              cacheDirectory: true,
+            },
+          },
+        ],
+      },
     ],
   },
   devServer: {
-    static: {
-        directory: path.resolve(__dirname, 'dist'),
-    },
+    static: [
+        {
+          directory: path.resolve(__dirname, 'dist'),
+        },
+        {
+          directory: path.resolve(__dirname, 'src/public'),
+          publicPath: '/',
+        },
+    ],
     open: true,
     port: 9000,
     hot: true,

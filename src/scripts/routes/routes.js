@@ -4,6 +4,7 @@ import LoginPage from '../pages/auth/login-page.js';
 import RegisterPage from '../pages/auth/register-page.js';
 import AddStoryPage from '../pages/stories/add-story-page.js';
 import DetailStoryPage from '../pages/stories/detail-story-page.js';
+import OfflinePage from '../pages/offline/offline-page.js';
 
 const routes = {
   '/': new HomePage(),
@@ -11,6 +12,7 @@ const routes = {
   '/register': new RegisterPage(),
   '/stories/add': new AddStoryPage(),
   '/about': new AboutPage(),
+  '/offline': new OfflinePage(),
   '/stories/:id': new DetailStoryPage(),
 };
 

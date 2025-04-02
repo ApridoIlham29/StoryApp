@@ -1,22 +1,25 @@
 import { getStoryDetail } from '../../data/api.js';
 import { parseActivePathname } from '../../routes/url-parser.js';
 import { showFormattedDate, initMap, addMarker, getMapInstance, openImageModal } from '../../utils/index.js';
-import { setContentBusy, showElementError } from '../../utils/ui-utils.js';
+import { setContentBusy, showElementError, showSuccessMessage, showErrorMessage, showNotification } from '../../utils/ui-utils.js';
+import { saveStoryForOffline, getOfflineStoryById, deleteOfflineStory } from '../../utils/idb-utils.js';
 
 export default class DetailStoryPage {
-    #map = null;
-    #story = null;
-    #pageContainer = null;
-    #imageElement = null;
-    #boundCleanup = this._cleanup.bind(this);
+    _map = null;
+    _story = null;
+    _pageContainer = null;
+    _imageElement = null;
+    _saveOfflineButton = null;
+    _isSavedOffline = false;
+    _boundCleanup = this._cleanup.bind(this);
+    _boundHandleSaveOfflineClick = this._handleSaveOfflineClick.bind(this);
+    _boundHandleImageClick = this._handleImageClick.bind(this);
 
     constructor() {
         this.title = 'Memuat Cerita...';
-        console.log("DetailStoryPage constructor");
     }
 
     async render() {
-        console.log("DetailStoryPage rendering...");
         return `
             <section class="container detail-story-page" id="detail-story-container" aria-live="polite" aria-busy="true">
                 <div class="content-loading-indicator" role="status">
@@ -28,10 +31,8 @@ export default class DetailStoryPage {
     }
 
     async afterRender() {
-        console.log("DetailStoryPage afterRender started");
-        this.#pageContainer = document.getElementById('detail-story-container');
-        if (!this.#pageContainer) {
-            console.error("Fatal: Detail story container not found!");
+        this._pageContainer = document.getElementById('detail-story-container');
+        if (!this._pageContainer) {
             return;
         }
 
@@ -39,199 +40,261 @@ export default class DetailStoryPage {
         const storyId = urlParams.id;
 
         if (!storyId) {
-            console.error("Story ID not found in URL.");
-            setContentBusy(this.#pageContainer, false);
-            showElementError(this.#pageContainer, 'Tidak dapat memuat cerita: ID tidak ditemukan di URL.', null);
-            this.#pageContainer.removeAttribute('aria-busy');
+            setContentBusy(this._pageContainer, false);
+            showElementError(this._pageContainer, 'Tidak dapat memuat cerita: ID tidak ditemukan di URL.', null);
+            this._pageContainer.removeAttribute('aria-busy');
             document.title = 'Error - ID Tidak Ditemukan';
             return;
         }
 
-        console.log(`Workspaceing detail for story ID: ${storyId}`);
-        setContentBusy(this.#pageContainer, true, 'Memuat detail cerita...');
+        setContentBusy(this._pageContainer, true, 'Memuat detail cerita...');
 
         try {
             const result = await getStoryDetail(storyId);
             if (result.error || !result.story) {
                 throw new Error(result.message || 'Data cerita tidak ditemukan.');
             }
-            this.#story = result.story;
-            console.log("Story detail fetched:", this.#story);
+            this._story = result.story;
 
-            this.title = `Cerita oleh ${this.#story.name} - Dicoding Story App`;
+            await this._checkOfflineStatus();
+
+            this.title = `Cerita oleh ${this._story.name} - Dicoding Story App`;
             document.title = this.title;
 
             this._renderStoryDetails();
-            setContentBusy(this.#pageContainer, false);
-            this.#pageContainer.removeAttribute('aria-busy');
+            setContentBusy(this._pageContainer, false);
+            this._pageContainer.removeAttribute('aria-busy');
 
-            this.#imageElement = this.#pageContainer.querySelector('.detail-story__image');
+            this._imageElement = this._pageContainer.querySelector('.detail-story__image');
             this._attachImageClickListener();
 
-            if (this.#story.lat && this.#story.lon) {
+            this._saveOfflineButton = this._pageContainer.querySelector('#save-offline-button');
+            this._attachSaveOfflineListener();
+
+            if (this._story.lat && typeof this._story.lat === 'number' && this._story.lon && typeof this._story.lon === 'number') {
                 this._initStoryMap();
             }
 
             this._attachCleanupListeners();
 
         } catch (error) {
-            console.error('Error fetching story detail:', error);
-            setContentBusy(this.#pageContainer, false);
-            showElementError(this.#pageContainer, `Gagal memuat cerita: ${error.message}. Silakan coba lagi atau kembali ke beranda.`, null);
-            this.#pageContainer.removeAttribute('aria-busy');
-            document.title = 'Error Memuat Cerita';
-            const errorElement = this.#pageContainer.querySelector('.error-message');
-            if (errorElement) errorElement.focus();
+            setContentBusy(this._pageContainer, false);
+            const offlineStory = await getOfflineStoryById(storyId);
+            if (offlineStory) {
+                this._story = offlineStory;
+                this._isSavedOffline = true;
+                this.title = `(Offline) Cerita oleh ${this._story.name} - Dicoding Story App`;
+                document.title = this.title;
+                this._renderStoryDetails();
+                 showNotification("Menampilkan versi offline karena gagal mengambil data terbaru.", "info", 5000);
+                 this._imageElement = this._pageContainer.querySelector('.detail-story__image');
+                 this._attachImageClickListener();
+                 this._saveOfflineButton = this._pageContainer.querySelector('#save-offline-button');
+                 this._attachSaveOfflineListener();
+                 if (this._story.lat && typeof this._story.lat === 'number' && this._story.lon && typeof this._story.lon === 'number') {
+                     this._initStoryMap();
+                 }
+                 this._attachCleanupListeners();
+            } else {
+                 showElementError(this._pageContainer, `Gagal memuat cerita: ${error.message}. Versi offline juga tidak ditemukan.`, null);
+                 this._pageContainer.removeAttribute('aria-busy');
+                 document.title = 'Error Memuat Cerita';
+                 const errorElement = this._pageContainer.querySelector('.error-message');
+                 if (errorElement) errorElement.focus();
+            }
         }
-        console.log("DetailStoryPage afterRender finished");
+    }
+
+    async _checkOfflineStatus() {
+       if (!this._story || !this._story.id) return;
+       try {
+          const offlineStory = await getOfflineStoryById(this._story.id);
+          this._isSavedOffline = !!offlineStory;
+       } catch (e) {
+          this._isSavedOffline = false;
+       }
     }
 
     _renderStoryDetails() {
-        if (!this.#story || !this.#pageContainer) return;
+        if (!this._story || !this._pageContainer) return;
 
-        const { name, description, photoUrl, createdAt, lat, lon } = this.#story;
+        const { name = 'Tanpa Nama', description = 'Tidak ada deskripsi.', photoUrl, createdAt, lat, lon } = this._story;
         const formattedDate = createdAt ? showFormattedDate(createdAt) : 'Tanggal tidak tersedia';
         const fallbackImage = 'images/placeholder.png';
         const imageUrl = photoUrl || fallbackImage;
-        const hasLocation = typeof lat === 'number' && typeof lon === 'number';
+        const hasLocation = typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon);
 
-        this.#pageContainer.innerHTML = `
-            <h1 id="detail-page-heading" tabindex="-1">Cerita oleh ${name || 'Anonim'}</h1>
-            <div class="detail-story__layout">
-                <div class="detail-story__media" role="button" aria-label="Perbesar gambar cerita">
-                    <img src="${imageUrl}" alt="Gambar cerita oleh ${name || 'Anonim'}" class="detail-story__image" onerror="this.onerror=null; this.src='${fallbackImage}'; this.alt='Gagal memuat gambar cerita oleh ${name || 'Anonim'}';">
-                </div>
-                <div class="detail-story__content">
-                    <p class="detail-story__date" aria-label="Tanggal dibuat">
-                        <i class="far fa-calendar-alt" aria-hidden="true"></i> Dibuat pada: ${formattedDate}
-                    </p>
-                    <p class="detail-story__description">${description || 'Tidak ada deskripsi.'}</p>
-                    ${hasLocation ? `
-                        <div class="detail-story__location">
-                            <h2>Lokasi Cerita</h2>
-                            <div id="detail-story-map" class="detail-story__map" role="application" aria-label="Peta lokasi cerita">
-                                <div class="content-loading-indicator" role="status"><p>Memuat peta...</p></div>
-                            </div>
-                        </div>
-                    ` : `
-                        <p class="detail-story__no-location">
-                            <i class="fas fa-map-marker-slash" aria-hidden="true"></i> Lokasi tidak tersedia untuk cerita ini.
-                        </p>
-                    `}
-                </div>
-            </div>
-            <div class="detail-story__actions">
-                <a href="#/" class="button button--secondary"><i class="fas fa-arrow-left" aria-hidden="true"></i> Kembali ke Beranda</a>
-            </div>
+        const saveButtonText = this._isSavedOffline ? '<i class="fas fa-trash-alt"></i> Hapus dari Offline' : '<i class="fas fa-save"></i> Simpan Offline';
+        const saveButtonClass = this._isSavedOffline ? 'button--danger' : 'button--success';
+
+        this._pageContainer.innerHTML = `
+          <h1 id="detail-page-heading" tabindex="-1">Cerita oleh ${name} ${this._isSavedOffline ? '<span style="font-size: 0.7em; color: var(--medium-text); font-weight: normal;">(Offline)</span>' : ''}</h1>
+          <div class="detail-story__layout">
+              <div class="detail-story__media" role="button" aria-label="Perbesar gambar cerita">
+                   <img src="${imageUrl}" alt="Gambar cerita oleh ${name}" class="detail-story__image" onerror="this.onerror=null; this.src='${fallbackImage}'; this.alt='Gagal memuat gambar cerita oleh ${name}';">
+              </div>
+              <div class="detail-story__content">
+                   <p class="detail-story__date" aria-label="Tanggal dibuat">
+                       <i class="far fa-calendar-alt" aria-hidden="true"></i> Dibuat pada: ${formattedDate}
+                   </p>
+                   <p class="detail-story__description">${description}</p>
+                   ${hasLocation ? `
+                       <div class="detail-story__location">
+                           <h2>Lokasi Cerita</h2>
+                           <div id="detail-story-map" class="detail-story__map" role="application" aria-label="Peta lokasi cerita">
+                               <div class="content-loading-indicator" role="status"><p>Memuat peta...</p></div>
+                           </div>
+                       </div>
+                   ` : `
+                       <p class="detail-story__no-location">
+                           <i class="fas fa-map-marker-slash" aria-hidden="true"></i> Lokasi tidak tersedia untuk cerita ini.
+                       </p>
+                   `}
+              </div>
+          </div>
+          <div class="detail-story__actions">
+              <a href="#/" class="button button--secondary"><i class="fas fa-arrow-left" aria-hidden="true"></i> Kembali ke Beranda</a>
+              <button id="save-offline-button" class="button ${saveButtonClass}" aria-live="polite">
+                  ${saveButtonText}
+              </button>
+          </div>
         `;
 
         const heading = document.getElementById('detail-page-heading');
-        if(heading) heading.focus();
+        if (heading) heading.focus();
     }
 
-    #handleImageClick = (event) => {
-        event.stopPropagation();
-         if (this.#story && this.#story.photoUrl) {
-            openImageModal(this.#story.photoUrl, `Cerita oleh ${this.#story.name || 'Anonim'}`);
-         }
+    _handleImageClick(event) {
+       event.stopPropagation();
+       if (this._story && this._story.photoUrl) {
+           openImageModal(this._story.photoUrl, `Cerita oleh ${this._story.name || 'Anonim'}`);
+       }
     }
 
-     _attachImageClickListener() {
+    _attachImageClickListener() {
         this._removeImageClickListener();
-        const mediaElement = this.#imageElement?.closest('.detail-story__media');
+        const mediaElement = this._imageElement?.closest('.detail-story__media');
         if (mediaElement) {
-            mediaElement.addEventListener('click', this.#handleImageClick);
+            mediaElement.addEventListener('click', this._boundHandleImageClick);
             mediaElement.style.cursor = 'zoom-in';
         }
     }
 
     _removeImageClickListener() {
-        const mediaElement = this.#imageElement?.closest('.detail-story__media');
+        const mediaElement = this._imageElement?.closest('.detail-story__media');
         if (mediaElement) {
-            mediaElement.removeEventListener('click', this.#handleImageClick);
+            mediaElement.removeEventListener('click', this._boundHandleImageClick);
             mediaElement.style.cursor = '';
         }
     }
 
+    _attachSaveOfflineListener() {
+       if (this._saveOfflineButton) {
+          this._saveOfflineButton.removeEventListener('click', this._boundHandleSaveOfflineClick);
+          this._saveOfflineButton.addEventListener('click', this._boundHandleSaveOfflineClick);
+       }
+    }
+
+    async _handleSaveOfflineClick() {
+       if (!this._story || !this._story.id || !this._saveOfflineButton) return;
+
+       this._saveOfflineButton.disabled = true;
+       this._saveOfflineButton.innerHTML = '<span class="spinner spinner--small"></span> Memproses...';
+
+       try {
+          if (this._isSavedOffline) {
+             await deleteOfflineStory(this._story.id);
+             showSuccessMessage(`Cerita "${this._story.name}" dihapus dari penyimpanan offline.`);
+             this._isSavedOffline = false;
+          } else {
+             await saveStoryForOffline(this._story);
+             showSuccessMessage(`Cerita "${this._story.name}" disimpan untuk akses offline.`);
+             this._isSavedOffline = true;
+          }
+          this._updateSaveButtonState();
+       } catch (error) {
+          showErrorMessage(`Gagal ${this._isSavedOffline ? 'menghapus' : 'menyimpan'} cerita: ${error.message}`);
+          this._updateSaveButtonState();
+       } finally {
+          this._saveOfflineButton.disabled = false;
+          this._updateSaveButtonState();
+       }
+    }
+
+    _updateSaveButtonState() {
+       if (!this._saveOfflineButton) return;
+       const saveButtonText = this._isSavedOffline ? '<i class="fas fa-trash-alt"></i> Hapus dari Offline' : '<i class="fas fa-save"></i> Simpan Offline';
+       const saveButtonClass = this._isSavedOffline ? 'button--danger' : 'button--success';
+       if (!this._saveOfflineButton.querySelector('.spinner')) {
+          this._saveOfflineButton.innerHTML = saveButtonText;
+       }
+       this._saveOfflineButton.className = `button ${saveButtonClass}`;
+    }
+
     _initStoryMap() {
-        if (!this.#story || !this.#story.lat || !this.#story.lon) return;
+        if (!this._story || typeof this._story.lat !== 'number' || typeof this._story.lon !== 'number') return;
 
         const mapContainerId = 'detail-story-map';
         const mapElement = document.getElementById(mapContainerId);
         if (!mapElement) {
-            console.warn("Detail story map container not found.");
             return;
         }
-        this._setContentBusy(mapElement, false);
+         const loadingIndicator = mapElement.querySelector('.content-loading-indicator');
+         if (loadingIndicator) mapElement.removeChild(loadingIndicator);
 
         try {
-            const coords = [this.#story.lat, this.#story.lon];
-            this.#map = initMap(mapContainerId, coords, 15);
-            if (this.#map) {
-                const popupContent = `Lokasi cerita oleh ${this.#story.name || 'Anonim'}`;
+            const coords = [this._story.lat, this._story.lon];
+            if (mapElement._leaflet_id) {
+               const oldMap = getMapInstance();
+               if (oldMap && oldMap.getContainer().id === mapContainerId) {
+                  oldMap.remove();
+               }
+            }
+
+            this._map = initMap(mapContainerId, coords, 15);
+            if (this._map) {
+                const popupContent = `Lokasi cerita oleh ${this._story.name || 'Anonim'}`;
                 addMarker(coords, popupContent, { draggable: false });
-                this.#map.eachLayer(layer => {
+                this._map.eachLayer(layer => {
                     if (layer instanceof L.Marker) {
                         layer.openPopup();
                     }
                 });
-                console.log("Detail story map initialized and marker added.");
             } else {
                  showElementError(mapElement, 'Gagal memuat peta lokasi.');
             }
         } catch (mapError) {
-            console.error("Error initializing detail story map:", mapError);
-             showElementError(mapElement, 'Gagal memuat peta lokasi.');
+            showElementError(mapElement, 'Gagal memuat peta lokasi.');
         }
     }
 
      _attachCleanupListeners() {
-        window.removeEventListener('hashchange', this.#boundCleanup);
-        window.removeEventListener('beforeunload', this.#boundCleanup);
-
-        window.addEventListener('hashchange', this.#boundCleanup, { once: true });
-        window.addEventListener('beforeunload', this.#boundCleanup);
-        console.log("DetailStoryPage cleanup listeners attached.");
+         window.removeEventListener('hashchange', this._boundCleanup);
+         window.addEventListener('hashchange', this._boundCleanup, { once: true });
      }
-
-     _setContentBusy(element, isBusy, message = '') {
-        if (!element) return;
-        const indicatorClass = 'content-loading-indicator';
-        let loadingEl = element.querySelector(`.${indicatorClass}`);
-        if(isBusy) {
-            element.setAttribute('aria-busy', 'true');
-            if(!loadingEl) {
-                loadingEl = document.createElement('div');
-                loadingEl.className = indicatorClass;
-                loadingEl.setAttribute('role', 'status');
-                loadingEl.innerHTML = `<p>${message}</p>`;
-                element.innerHTML = '';
-                element.appendChild(loadingEl);
-            }
-            loadingEl.style.display = 'flex';
-        } else {
-            element.removeAttribute('aria-busy');
-            if (loadingEl) { try { element.removeChild(loadingEl); } catch(e) {} }
-        }
-     }
-
 
      _cleanup() {
-        console.log("[DetailStoryPage] Cleaning up resources...");
-        this._removeImageClickListener();
-        const map = getMapInstance();
-        if (this.#map?.remove) {
-             try { this.#map.remove(); console.log("Local map instance removed."); } catch (e) {}
-             this.#map = null;
-        } else if (map?.remove && document.getElementById('detail-story-map')?._leaflet_id === map._leaflet_id) {
-             try { map.remove(); console.log("Global map instance removed."); } catch (e) {}
-        }
+         this._removeImageClickListener();
+         if (this._saveOfflineButton) {
+            this._saveOfflineButton.removeEventListener('click', this._boundHandleSaveOfflineClick);
+         }
 
-        window.removeEventListener('beforeunload', this.#boundCleanup);
+         if (this._map && typeof this._map.remove === 'function') {
+             try { this._map.remove(); } catch (e) {}
+             this._map = null;
+         } else {
+             const globalmap = getMapInstance();
+             if (globalmap && globalmap.getContainer() && globalmap.getContainer().id === 'detail-story-map') {
+                 try { globalmap.remove(); } catch (e) {}
+             }
+         }
 
-        this.#pageContainer = null;
-        this.#story = null;
-        this.#imageElement = null;
-        console.log("[DetailStoryPage] Cleanup complete.");
+         window.removeEventListener('hashchange', this._boundCleanup);
+
+         this._pageContainer = null;
+         this._story = null;
+         this._imageElement = null;
+         this._saveOfflineButton = null;
+         this._isSavedOffline = false;
      }
 }
