@@ -3,13 +3,13 @@ function extractPathnameSegments(path) {
   const splitUrl = cleanPath.split('/');
 
   if (splitUrl.length === 1 && splitUrl[0] === '') {
-      return { resource: null, id: null, verb: null };
+     return { resource: null, id: null, verb: null };
   }
 
   return {
-      resource: splitUrl[0] || null,
-      id: splitUrl[1] || null,
-      verb: splitUrl[2] || null,
+     resource: splitUrl[0] || null,
+     id: splitUrl[1] || null,
+     verb: splitUrl[2] || null,
   };
 }
 
@@ -17,18 +17,18 @@ function constructRoutePattern(pathSegments) {
   let route = '/';
 
   if (pathSegments.resource) {
-      route = `/${pathSegments.resource}`;
-      if (pathSegments.id && pathSegments.id !== 'add') {
-          route += '/:id';
+     route = `/${pathSegments.resource}`;
+     if (pathSegments.id && pathSegments.id !== 'add') {
+         route += '/:id';
+         if (pathSegments.verb) {
+             route += `/${pathSegments.verb}`;
+         }
+     } else if (pathSegments.id) {
+         route += `/${pathSegments.id}`;
           if (pathSegments.verb) {
-              route += `/${pathSegments.verb}`;
-          }
-      } else if (pathSegments.id) {
-          route += `/${pathSegments.id}`;
-           if (pathSegments.verb) {
-              route += `/${pathSegments.verb}`;
-          }
-      }
+             route += `/${pathSegments.verb}`;
+         }
+     }
   }
   return route;
 }
@@ -40,16 +40,14 @@ export function getActivePathname() {
 
 export function getActiveRoute() {
   const pathname = getActivePathname();
-  const knownRoutePatterns = ['/', '/login', '/register', '/stories/add', '/about', '/stories/:id'];
+  const knownRoutePatterns = ['/', '/login', '/register', '/stories/add', '/about', '/stories/:id', '/offline'];
 
   const detailMatch = pathname.match(/^\/stories\/([a-zA-Z0-9_-]+)$/);
   if (detailMatch && pathname !== '/stories/add') {
-     console.log(`getActiveRoute matched: /stories/:id for path ${pathname}`);
      return '/stories/:id';
   }
 
   if (knownRoutePatterns.includes(pathname)) {
-     console.log(`getActiveRoute matched: ${pathname} for path ${pathname}`);
      return pathname;
   }
 

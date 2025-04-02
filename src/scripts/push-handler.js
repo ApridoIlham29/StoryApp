@@ -4,7 +4,7 @@ self.addEventListener('push', (event) => {
   
     const pushData = event.data ? event.data.json() : {};
   
-    const title = pushData.title || 'StoryApp Notification';
+    const title = pushData.title || 'Storyku Notification';
     const options = {
       body: pushData.body || 'Ada notifikasi baru untukmu!',
       icon: pushData.icon || 'icons/icon-192x192.png',

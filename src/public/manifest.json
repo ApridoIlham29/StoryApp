@@ -1,6 +1,6 @@
 {
-    "name": "Dicoding Story App",
-    "short_name": "StoryApp",
+    "name": "Dicoding Storyku",
+    "short_name": "Storyku",
     "description": "Aplikasi Dicoding Story menggunakan Web API",
     "start_url": "/index.html",
     "display": "standalone",
@@ -68,14 +68,14 @@
     "screenshots": [
       {
         "src": "screenshots/screenshot-mobile-1.png",
-        "sizes": "540x720",
+        "sizes": "898x1914",
         "type": "image/png",
         "form_factor": "narrow",
         "label": "Tampilan Beranda di Mobile"
       },
       {
         "src": "screenshots/screenshot-desktop-1.png",
-        "sizes": "1024x768",
+        "sizes": "3420x2140",
         "type": "image/png",
         "form_factor": "wide",
         "label": "Tampilan Beranda di Desktop"

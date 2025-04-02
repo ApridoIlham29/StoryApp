@@ -56,20 +56,19 @@ export default class DetailStoryPage {
             }
             this._story = result.story;
 
-            await this._checkOfflineStatus();
-
             this.title = `Cerita oleh ${this._story.name} - Dicoding Story App`;
             document.title = this.title;
 
+            await this._checkOfflineStatus();
             this._renderStoryDetails();
-            setContentBusy(this._pageContainer, false);
-            this._pageContainer.removeAttribute('aria-busy');
 
             this._imageElement = this._pageContainer.querySelector('.detail-story__image');
             this._attachImageClickListener();
-
             this._saveOfflineButton = this._pageContainer.querySelector('#save-offline-button');
             this._attachSaveOfflineListener();
+
+            setContentBusy(this._pageContainer, false);
+            this._pageContainer.removeAttribute('aria-busy');
 
             if (this._story.lat && typeof this._story.lat === 'number' && this._story.lon && typeof this._story.lon === 'number') {
                 this._initStoryMap();
@@ -83,22 +82,26 @@ export default class DetailStoryPage {
             if (offlineStory) {
                 this._story = offlineStory;
                 this._isSavedOffline = true;
+
                 this.title = `(Offline) Cerita oleh ${this._story.name} - Dicoding Story App`;
                 document.title = this.title;
+
                 this._renderStoryDetails();
-                 showNotification("Menampilkan versi offline karena gagal mengambil data terbaru.", "info", 5000);
+                showNotification("Menampilkan versi offline karena gagal mengambil data terbaru.", "info", 5000);
+
                  this._imageElement = this._pageContainer.querySelector('.detail-story__image');
                  this._attachImageClickListener();
                  this._saveOfflineButton = this._pageContainer.querySelector('#save-offline-button');
                  this._attachSaveOfflineListener();
+
                  if (this._story.lat && typeof this._story.lat === 'number' && this._story.lon && typeof this._story.lon === 'number') {
                      this._initStoryMap();
                  }
                  this._attachCleanupListeners();
             } else {
+                 document.title = 'Error Memuat Cerita';
                  showElementError(this._pageContainer, `Gagal memuat cerita: ${error.message}. Versi offline juga tidak ditemukan.`, null);
                  this._pageContainer.removeAttribute('aria-busy');
-                 document.title = 'Error Memuat Cerita';
                  const errorElement = this._pageContainer.querySelector('.error-message');
                  if (errorElement) errorElement.focus();
             }
@@ -188,6 +191,7 @@ export default class DetailStoryPage {
         }
     }
 
+
     _attachSaveOfflineListener() {
        if (this._saveOfflineButton) {
           this._saveOfflineButton.removeEventListener('click', this._boundHandleSaveOfflineClick);
@@ -225,9 +229,7 @@ export default class DetailStoryPage {
        if (!this._saveOfflineButton) return;
        const saveButtonText = this._isSavedOffline ? '<i class="fas fa-trash-alt"></i> Hapus dari Offline' : '<i class="fas fa-save"></i> Simpan Offline';
        const saveButtonClass = this._isSavedOffline ? 'button--danger' : 'button--success';
-       if (!this._saveOfflineButton.querySelector('.spinner')) {
-          this._saveOfflineButton.innerHTML = saveButtonText;
-       }
+       this._saveOfflineButton.innerHTML = saveButtonText;
        this._saveOfflineButton.className = `button ${saveButtonClass}`;
     }
 

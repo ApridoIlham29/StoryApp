@@ -46,7 +46,7 @@ module.exports = merge(common, {
           urlPattern: ({ request }) => request.mode === 'navigate',
           handler: 'NetworkFirst',
           options: {
-            cacheName: 'storyapp-pages-cache',
+            cacheName: 'storyku-pages-cache',
             expiration: {
               maxEntries: 10,
               maxAgeSeconds: 30 * 24 * 60 * 60,
@@ -57,7 +57,7 @@ module.exports = merge(common, {
           urlPattern: ({ url }) => url.href.startsWith('https://story-api.dicoding.dev/v1/'),
           handler: 'NetworkFirst',
           options: {
-            cacheName: 'storyapp-api-cache',
+            cacheName: 'storyku-api-cache',
             expiration: {
               maxEntries: 100,
               maxAgeSeconds: 6 * 60 * 60,
@@ -71,7 +71,7 @@ module.exports = merge(common, {
           urlPattern: ({ url }) => url.href.includes('.dicoding.dev') && /\.(?:png|gif|jpg|jpeg|svg)$/.test(url.pathname),
           handler: 'CacheFirst',
           options: {
-            cacheName: 'storyapp-image-cache',
+            cacheName: 'storyku-image-cache',
             expiration: {
               maxEntries: 60,
               maxAgeSeconds: 30 * 24 * 60 * 60,
@@ -82,7 +82,7 @@ module.exports = merge(common, {
            urlPattern: ({ request }) => request.destination === 'style' || request.destination === 'script' || request.destination === 'worker' || request.destination === 'font' || request.destination === 'image',
            handler: 'StaleWhileRevalidate',
            options: {
-             cacheName: 'storyapp-static-assets-cache',
+             cacheName: 'storyku-static-assets-cache',
              expiration: {
                maxEntries: 100,
                maxAgeSeconds: 7 * 24 * 60 * 60,
@@ -93,7 +93,7 @@ module.exports = merge(common, {
            urlPattern: ({url}) => url.href.startsWith('https://cdnjs.cloudflare.com') || url.href.startsWith('https://unpkg.com/leaflet'),
            handler: 'CacheFirst',
            options: {
-             cacheName: 'storyapp-external-libs-cache',
+             cacheName: 'storyku-external-libs-cache',
              expiration: {
                maxAgeSeconds: 30 * 24 * 60 * 60,
              },
@@ -104,7 +104,7 @@ module.exports = merge(common, {
            urlPattern: ({url}) => url.href.startsWith('https://fonts.googleapis.com') || url.href.startsWith('https://fonts.gstatic.com'),
            handler: 'StaleWhileRevalidate',
            options: {
-             cacheName: 'storyapp-google-fonts-cache',
+             cacheName: 'storyku-google-fonts-cache',
              expiration: {
                maxEntries: 30,
                maxAgeSeconds: 30 * 24 * 60 * 60

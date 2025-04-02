@@ -1,7 +1,7 @@
 import { Workbox } from 'workbox-window';
 import { showSuccessMessage, showErrorMessage, showNotification } from './ui-utils';
 
-const VAPID_PUBLIC_KEY = 'BAaVpLsh75T1_54fY03zGq5p8Tz0WciXCq6Y8YRE_5C3Y-2kY6X7wfuWa-5l43cO6M9cE1qfxzn7P8KLqY1t_7E';
+const VAPID_PUBLIC_KEY = 'BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk';
 
 const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) {
